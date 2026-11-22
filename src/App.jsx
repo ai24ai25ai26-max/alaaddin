@@ -41,11 +41,20 @@ function App() {
   }, [user])
 
   return (
-    <>
-      {isProdFallback && <ProductionConfigWarningBanner />}
-      {user ? <AppShell /> : <LoginView />}
-      <ToastContainer />
-    </>
+    <div className="relative min-h-screen bg-[#08090C] text-slate-100 selection:bg-brand-500/30 selection:text-brand-200">
+      {/* خلفيات إضاءة أوبتكال غلاسية في الخلفية */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute -top-32 -right-32 w-[32rem] h-[32rem] bg-brand-500/10 rounded-full blur-[140px]" />
+        <div className="absolute top-1/3 -left-32 w-[28rem] h-[28rem] bg-cyan-500/10 rounded-full blur-[160px]" />
+        <div className="absolute -bottom-32 right-1/4 w-[36rem] h-[36rem] bg-indigo-500/10 rounded-full blur-[160px]" />
+      </div>
+
+      <div className="relative z-10">
+        {isProdFallback && <ProductionConfigWarningBanner />}
+        {user ? <AppShell /> : <LoginView />}
+        <ToastContainer />
+      </div>
+    </div>
   )
 }
 

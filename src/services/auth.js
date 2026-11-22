@@ -548,13 +548,9 @@ export async function login(email, password) {
     if (!authErr) {
       try {
         window.startFirestoreSync();
-        const pullResult = await withTimeout(window.fetchAllFromFirestore(true), readTimeoutMs(), READ_TIMED_OUT);
-        if (pullResult === READ_TIMED_OUT) {
-          const cfg = (typeof window.getFirebaseConfig === 'function') ? (window.getFirebaseConfig() || {}) : {};
-          console.warn('[auth.login] استجابة Firestore تجاوزت ' + readTimeoutMs() + 'ms — الدخول بالبيانات المحلية وستُعاد المزامنة تلقائياً عند عودة الاتصال. projectId: ' + (cfg.projectId || 'غير معروف'));
-          if (window.showToast) {
-            window.showToast('⚠️ السحابة بطيئة أو محجوبة — تم الدخول بالبيانات المحلية وستُعاد المزامنة تلقائياً', 'warning');
-          }
+        // تشغيل المزامنة السحابية فوراً دون تعطيل انتقال المستخدم إلى لوحة التحكم
+        if (typeof window.fetchAllFromFirestore === 'function') {
+          window.fetchAllFromFirestore(true).catch(() => {});
         }
       } catch { /* local snapshot remains authoritative offline */ }
     }

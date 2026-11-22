@@ -1742,30 +1742,60 @@ button.btn-supplier-return {
 }
 
 /* KPI: compact metric tiles, not seven floating cards. */
-.v7-kpi-grid { gap: 10px !important; }
+.v7-kpi-grid { gap: 14px !important; }
 .v7-kpi {
-  min-height: 116px;
-  padding: 15px 16px !important;
-  border: 1px solid var(--v7-line) !important;
-  border-radius: var(--v7-radius-md) !important;
-  background: color-mix(in srgb, var(--ui-surface-1) 84%, transparent) !important;
-  backdrop-filter: blur(12px) saturate(150%);
-  -webkit-backdrop-filter: blur(12px) saturate(150%);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), var(--v7-shadow-1) !important;
-  transition: border-color .16s ease, background .16s ease, transform .16s ease, box-shadow .16s ease;
+  min-height: 124px;
+  padding: 18px 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 20px !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%), rgba(13, 17, 26, 0.72) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.16), 0 12px 36px -10px rgba(0, 0, 0, 0.55) !important;
+  transition: all .25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+.v7-kpi::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.35) 50%, transparent 100%);
+  pointer-events: none;
 }
 .v7-kpi::after { display: none !important; }
 .v7-kpi:hover {
-  border-color: color-mix(in srgb, var(--brand-500) 35%, var(--v7-line)) !important;
-  background: color-mix(in srgb, var(--ui-surface-2) 92%, transparent) !important;
-  transform: translateY(-2px);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.18), var(--v7-shadow-2) !important;
+  border-color: rgba(56, 189, 248, 0.45) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(15, 23, 42, 0.85) !important;
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.3), 0 20px 48px -8px rgba(2, 132, 199, 0.28) !important;
 }
-.v7-kpi .text-xs { font-size: .68rem !important; font-weight: 700 !important; color: var(--ui-text-muted) !important; }
-.v7-kpi .text-lg { font-size: 1.16rem !important; letter-spacing: -.025em; }
-.v7-kpi .text-2xl { font-size: 1.45rem !important; letter-spacing: -.025em; }
-.v7-kpi .p-2 { width: 30px; height: 30px; padding: 6px !important; border-radius: 8px !important; background: var(--ui-surface-2) !important; border-color: var(--v7-line) !important; }
-.v7-kpi .p-2 svg { width: 15px; height: 15px; }
+.v7-kpi .text-xs { font-size: .72rem !important; font-weight: 700 !important; color: #94a3b8 !important; }
+.v7-kpi .text-lg { font-size: 1.25rem !important; letter-spacing: -.025em; }
+.v7-kpi .text-2xl { font-size: 1.55rem !important; letter-spacing: -.025em; }
+.v7-kpi .p-2 {
+  width: 36px;
+  height: 36px;
+  padding: 8px !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.v7-kpi .p-2 svg { width: 18px; height: 18px; }
+
+/* Frosted glass utilities */
+.glass-panel {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%), rgba(13, 17, 26, 0.75) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.15), 0 16px 40px -12px rgba(0, 0, 0, 0.5) !important;
+  border-radius: 1.25rem !important;
+}
 
 /* HDI — dashboard rows: section titles + self-drawn SVG sales trend. */
 .v7-section-title { position: relative; }
