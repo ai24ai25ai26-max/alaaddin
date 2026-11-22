@@ -1,0 +1,109 @@
+# خطة النسخ الاحتياطي اليومي — خطوة بخطوة
+
+## 🔑 الخطوة 1: احصل على مفتاح خدمة (Service Account)
+
+**الطريقة أ (الأسهل — من Firebase نفسها):**
+1. افتح [console.firebase.google.com](https://console.firebase.google.com) → اختار مشروع العميل
+2. **الترس ⚙️ (Project settings)**
+3. تبويب **Service accounts**
+4. زر **Generate new private key** → **Generate key**
+5. هيتحمّللك ملف `firebase-adminsdk-xxxxx.json` ← **ده الملف اللي محتاجه** (عنده صلاحيات كاملة على المشروع = بيقرأ Firestore فوراً)
+
+**الطريقة ب (حساب محدود الصلاحية - اختياري):**
+1. افتح [console.cloud.google.com](https://console.cloud.google.com) ← تأكد إنك على **مشروع العميل نفسه**
+2. **IAM & Admin** → **Service Accounts**
+3. **Create service account**:
+   - الاسم: `bms-backup`
+   - في مؤشر Group: **Datastore** → **Cloud Datastore User**
+4. **Keys** → **Add key** → **JSON** → نزّل الملف
+
+---
+
+## 🏭 الخطوة 2: ارفع المفتاح في واجهة المصنع
+
+قبل ما تضغط «بناء»:
+
+| الخانة | اللي تعمله |
+|---|---|
+| **ملف مفتاح الخدمة** | اضغط «Choose file / No file chosen» ← اختار ملف الـ JSON اللي نزّلته |
+| **إيميل العميل** | اكتب الإيميل اللي هتشارك معه النسخ (الأفضل: إيميل مالك المشروع) |
+
+اللحظة اللي ترفع بيها الملف، هيظهر جنبها: `✅ تم تحميل مفتاح الخدمة: إلخ.`
+
+---
+
+## 🚀 الخطوة 3: اضغط «بناء»
+
+في سجل التنفيذ هتلاحظ سطر مهم:
+```
+backup\BMS-Daily-Backup.gs تم توليده — نسخ احتياطي ليلي إلى Drive جاهز للصق
+```
+
+الملف بيتولد في: `E:\محمد\سييتم علاء\Projects\<clientId>\backup\BMS-Daily-Backup.gs`
+
+**وده اللي المصنع عمله لوحده (في جوه الملف):**
+- حط مفتاح الخدمة كاملاً مكان `__SERVICE_ACCOUNT_JSON__`
+- حط عشان projectId بتاعك مكان `__PROJECT_ID__`
+- حط إيميل العميل مكان `__OWNER_EMAIL__`
+
+**⚠️ مهم:** الملف خارج نطاق الـ git (مجلد `backup/` في `.gitignore`) — المفتاح **مايترفعش للريبو العام أبداً**.
+
+---
+
+## 💻 الخطوة 4: الصق السكربت في Google Apps Script
+
+1. افتح الملف `backup\BMS-Daily-Backup.gs` بقلم المحرر ← **حدد الكل وانسخه**
+2. افتح [script.google.com](https://script.google.com) (بالحساب اللي هيدير النسخ)
+3. **+ New project** → امسح الكود الافتراضي في `Code.gs` → **الصق** → **Save** (Ctrl+S)
+
+---
+
+## ⚙️ الخطوة 5: فعّل Google Drive API (مرة واحدة للمشروع)
+
+1. افتح [console.cloud.google.com](https://console.cloud.google.com) ← مشروع العميل
+2. **APIs & Services** → **Library**
+3. ابحث **Google Drive API** → **Enable**
+
+(اختصار مباشر: `console.cloud.google.com/apis/library/drive.googleapis.com?project=<projectId>`)
+
+---
+
+## ⏰ الخطوة 6: جدّد الـ Trigger وجرّب
+
+من قائمة الدوال في أعلى محرر السكربت:
+
+**1) شغّل `setupTrigger`:**
+- Run ← أول مرة هتطلب **Review permissions** ← اختار حساب الشركة ← **Allow** (تحذير "Google hasn't verified" طبيعي — كونه script خاص بيك)
+- ✅ السجل: `Scheduled: daily 02:00 Africa/Cairo`
+
+**2) شغّل `createBackupNow` (تجرية فورية):**
+- Run ← يمكن تطلب إذن Drive تاني ← **Allow**
+- ✅ السجل: `Backup OK: bms_backup_2026-08-16.json (...)`
+
+**3) تحقق:**
+- افتح Google Drive ← هتلاقي مجلد **`BMS Backups`**
+- جواه ملف اليوم `bms_backup_YYYY-MM-DD.json` — ومشارك تلقائياً مع إيميل العميل
+
+---
+
+## ✅ من بعد كده
+السكربت بيشتغل **لوحده كل ليلة 2:00 AM بتوقيت القاهرة** على سيرفرات جوجل:
+- بيقرأ 9 مجموعات Firestore كاملة (customers, suppliers, products, orders, payments, users, supplierReturns, supplierTransactions, expenses)
+- بيحفظها JSON مؤرخ في `BMS Backups`
+- بيحذف النسخ الأقدم من **60 يوم** تلقائياً
+- **جهاز المحل لا يحتاج يكون مفتوح**
+
+---
+
+## ملخص سريع
+
+| الخطوة | إيه |
+|---|---|
+| 1 | تحمّل مفتاح JSON من Firebase Settings → Service accounts |
+| 2 | ارفعه في المصنع + اكتب إيميل العميل |
+| 3 | ابني → المصنع يولّد `backup/BMS-Daily-Backup.gs` جاهز |
+| 4 | الصقه في script.google.com |
+| 5 | فعّل Google Drive API |
+| 6 | شغّل `setupTrigger` + `createBackupNow` وتحقق |
+
+عايزني أتحقق معاك إن مفتاح العميل الحالي (el-ragabi) متولد ومثبت لحد إيه؟
