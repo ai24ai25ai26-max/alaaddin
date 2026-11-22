@@ -28,7 +28,7 @@ const INITIAL_USERS = [
 // كان الدخول «يقعد يحمل» بلا نهاية. هنا تُحل الدالة بالـ fallback عند تجاوز المهلة
 // أو رفض الطلب، فلا يتوقف الدخول أبداً على اتصال معلّق.
 // =============================================================================
-const FIREBASE_READ_TIMEOUT_MS = 12000;
+const FIREBASE_READ_TIMEOUT_MS = 5000;
 const READ_TIMED_OUT = { __readTimedOut: true };
 
 function withTimeout(promise, ms, fallback) {
@@ -406,7 +406,11 @@ export async function verifyPasswordHash(user, enteredPassword) {
 async function isBootstrapDone() {
   if (!window.db || typeof window.db.collection !== 'function') return false;
   try {
-    const snap = await window.db.collection('settings').doc('staffBootstrapDone').get();
+    const snap = await withTimeout(
+      window.db.collection('settings').doc('staffBootstrapDone').get(),
+      3000,
+      null
+    );
     return !!(snap && snap.exists);
   } catch {
     return false;
@@ -582,45 +586,47 @@ export async function login(email, password) {
         // staff are completely empty — after that the bootstrap is closed.
         if (user && user.id === 'USR-1001' && !userDocExists && typeof window.db.collection === 'function') {
           try {
-            await window.db.collection('users').doc('USR-1001').set({
-              id: 'USR-1001',
-              name: 'المدير العام',
-              email: 'admin@store.com',
-              role: 'admin',
-              uid: fbUid,
-              createdAt: '2026-07-01T10:00:00Z',
-              updatedAt: getCairoFormattedDate()
-            });
+            await withTimeout(
+              window.db.collection('users').doc('USR-1001').set({
+                id: 'USR-1001',
+                name: 'المدير العام',
+                email: 'admin@store.com',
+                role: 'admin',
+                uid: fbUid,
+                createdAt: '2026-07-01T10:00:00Z',
+                updatedAt: getCairoFormattedDate()
+              }),
+              4000,
+              null
+            );
             user.uid = fbUid;
           } catch (seedErr) {
             console.warn('seed user ensure note:', seedErr && seedErr.message);
           }
         }
-          try {
-            const staffSnap = await window.db.collection('staff').doc(fbUid).get();
-            if (staffSnap && !staffSnap.exists) {
-              // 🔧 V3.45.1 — SELF-HEALING: الحساب مسجّل فعلاً في Firebase Auth وله
-              // وثيقة في `users`، لكن سجل تفعيله staff/{uid} مفقود (مشروع جديد أو
-              // انقطاع أثناء إنشاء الحساب). نعيد إنشاءه تلقائياً — القواعد تسمح
-              // بكتابته كأول مدير (بوتستراف) عندما تكون المجموعة فارغة. إن لم
-              // يُكتب السجل ولم يكن الحساب مديراً، يبقى الرفض كما في السابق.
-              const healed = await healMissingStaffDoc(fbUid, cleanEmail, user);
-              const isPrivileged = !!(user && (user.role === 'admin' || user.id === 'USR-1001'));
-              if (!healed && !isPrivileged) {
-                throw new Error('حسابك غير مُفعَّل في نظام هذا المتجر — يرجى التواصل مع المدير');
-              }
-              // V3.63 — BMS SAFETY NET: الفشل الصامت في كتابة سجل الفريق كان يترك
-              // قاعدة سحابية فارغة بلا أي إشعار ويبدو الدخول ناجحاً. الآن يُنبه
-              // الحساب المتميز بوضوح مع الإجراء اليدوي المتاح (تفعيل بوتستراف
-              // يدوي بمفتاح خدمة) بدل الاستمرار في صمت.
-              if (!healed && isPrivileged && window.showToast) {
-                console.warn('[auth.login] staff/{uid} مفقود ولم ينجح الشفاء الذاتي — يحتاج بوتستراف يدوي.');
-                window.showToast('⚠️ لم يُسجَّل سجل فريق هذا الحساب في السحابة (بوتستراف ناقص). أعد تسجيل الدخول بعد اكتمال الاتصال؛ إن تكرر الأمر، نفّذ التفعيل اليدوي الموثق في CLIENT-SETUP-DETAILED.md', 'warning', 8000);
-              }
+        try {
+          const staffSnap = await withTimeout(
+            window.db.collection('staff').doc(fbUid).get(),
+            4000,
+            null
+          );
+          if (staffSnap && !staffSnap.exists) {
+            const healed = await withTimeout(
+              healMissingStaffDoc(fbUid, cleanEmail, user),
+              4000,
+              false
+            );
+            const isPrivileged = !!(user && (user.role === 'admin' || user.id === 'USR-1001'));
+            if (!healed && !isPrivileged) {
+              throw new Error('حسابك غير مُفعَّل في نظام هذا المتجر — يرجى التواصل مع المدير');
             }
-          } catch (staffErr) {
+            if (!healed && isPrivileged && window.showToast) {
+              console.warn('[auth.login] staff/{uid} مفقود ولم ينجح الشفاء الذاتي — يحتاج تفعيل Firestore.');
+              window.showToast('⚠️ لم يُسجَّل سجل فريق هذا الحساب في السحابة (تأكد من إنشاء قاعدة بيانات Firestore في الكونسول). يمكنك استخدام النظام الآن.', 'warning', 8000);
+            }
+          }
+        } catch (staffErr) {
           if (staffErr && staffErr.message && staffErr.message.indexOf('غير مُفعَّل') !== -1) throw staffErr;
-          // فشل شبكة/صلاحيات في قراءة سجل الفريق: يترك للقواعد الطبيعية.
         }
       }
     }
